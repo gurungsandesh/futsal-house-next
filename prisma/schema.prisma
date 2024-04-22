@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Profile {
+  id                String            @id @default(dbgenerated("auth.uid()")) @db.Uuid
+  created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  first_name        String?
+  last_name         String?
+  avatar            String?
+  cover             String?
+  location          Location?         @relation(fields: [locationId], references: [id])
+  locationId        String?           @db.Uuid
+  FutsalCenter      FutsalCenter[]
+  MembersOnTeam     MembersOnTeam[]
+  challengerTickets MatchMakeTicket[] @relation("Callenger")
+  opponentTickets   MatchMakeTicket[] @relation("Opponent")
+}
+
+model Location {
+  id           String         @id @db.Uuid
+  created_at   DateTime       @default(now()) @db.Timestamptz(6)
+  name         String
+  street       String
+  city         String
+  municipality String
+  ward         String
+  district     String
+  province     String
+  country      String
+  zip          String?
+  notes        String?
+  Profile      Profile[]
+  FutsalCenter FutsalCenter[]
+}
+
+model Team {
+  id            String          @id @db.Uuid
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  name          String
+  avatar        String?
+  cover         String?
+  MembersOnTeam MembersOnTeam[]
+  challengers   Match[]         @relation("Challenger Team")
+  opponents     Match[]         @relation("Opponent Team")
+}
+
+model MembersOnTeam {
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  team       Team     @relation(fields: [teamId], references: [id])
+  teamId     String   @db.Uuid
+  profile    Profile  @relation(fields: [profileId], references: [id])
+  profileId  String   @db.Uuid
+
+  @@id([teamId, profileId])
+}
+
+model FutsalCenter {
+  id              String            @id @db.Uuid
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  name            String
+  avatar          String?
+  cover           String?
+  location        Location?         @relation(fields: [locationId], references: [id])
+  locationId      String?           @db.Uuid
+  owner           Profile?          @relation(fields: [ownerId], references: [id])
+  ownerId         String?           @db.Uuid
+  MatchMakeTicket MatchMakeTicket[]
+  Match           Match[]
+}
+
+model MatchMakeTicket {
+  id         String   @id @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  status     String
+  message    String?
+
+  futsalCenter   FutsalCenter @relation(fields: [futsalCenterId], references: [id])
+  futsalCenterId String       @db.Uuid
+
+  time           DateTime
+  duration       Int
+
+  challenger   Profile @relation("Callenger", fields: [challengerId], references: [id])
+  challengerId String  @db.Uuid
+
+  opponent   Profile? @relation("Opponent", fields: [opponentId], references: [id])
+  opponentId String?  @db.Uuid
+
+  match   Match?  @relation(fields: [matchId], references: [id])
+  matchId String? @db.Uuid
+}
+
+model Match {
+  id         String   @id @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  cover      String?
+  commentary String?
+  status     String
+
+  futsalCenter   FutsalCenter @relation(fields: [futsalCenterId], references: [id])
+  futsalCenterId String       @db.Uuid
+  time           DateTime
+  duration       Int
+
+  challengerTeam   Team?   @relation("Challenger Team", fields: [challengerTeamId], references: [id])
+  challengerTeamId String? @db.Uuid
+
+  opponentTeam   Team?   @relation("Opponent Team", fields: [opponentTeamId], references: [id])
+  opponentTeamId String? @db.Uuid
+
+  MatchMakeTicket MatchMakeTicket[]
+}
