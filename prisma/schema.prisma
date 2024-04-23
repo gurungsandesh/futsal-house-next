@@ -10,111 +10,174 @@ datasource db {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Profile {
-  id                String            @id @default(dbgenerated("auth.uid()")) @db.Uuid
-  created_at        DateTime          @default(now()) @db.Timestamptz(6)
-  first_name        String?
-  last_name         String?
-  avatar            String?
-  cover             String?
-  location          Location?         @relation(fields: [locationId], references: [id])
-  locationId        String?           @db.Uuid
-  FutsalCenter      FutsalCenter[]
-  MembersOnTeam     MembersOnTeam[]
-  challengerTickets MatchMakeTicket[] @relation("Callenger")
-  opponentTickets   MatchMakeTicket[] @relation("Opponent")
+  id                  String                @id @default(dbgenerated("auth.uid()")) @db.Uuid
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  first_name          String?
+  last_name           String?
+  locationId          String?               @db.Uuid
+  avatar              String?
+  cover               String?
+  FutsalCenter        FutsalCenter[]
+  challengerTickets   MatchMakeTicket[]     @relation("Callenger")
+  opponentTickets     MatchMakeTicket[]     @relation("Opponent")
+  MembersOnTeam       MembersOnTeam[]
+  location            Location?             @relation(fields: [locationId], references: [id])
+  MembersOnLockedTeam MembersOnLockedTeam[]
+  Review              Review[]
 }
 
 model Location {
-  id           String         @id @db.Uuid
-  created_at   DateTime       @default(now()) @db.Timestamptz(6)
-  name         String
-  street       String
-  city         String
-  municipality String
-  ward         String
-  district     String
-  province     String
-  country      String
-  zip          String?
-  notes        String?
-  Profile      Profile[]
-  FutsalCenter FutsalCenter[]
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at        DateTime       @default(now()) @db.Timestamptz(6)
+  formatted_address String
+  street            String?
+  city              String?
+  municipality      String?
+  ward              String?
+  district          String?
+  province          String?
+  country           String?
+  zip               String?
+  notes             String?
+  FutsalCenter      FutsalCenter[]
+  Profile           Profile[]
 }
 
 model Team {
-  id            String          @id @db.Uuid
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   created_at    DateTime        @default(now()) @db.Timestamptz(6)
   name          String
   avatar        String?
   cover         String?
   MembersOnTeam MembersOnTeam[]
-  challengers   Match[]         @relation("Challenger Team")
-  opponents     Match[]         @relation("Opponent Team")
 }
 
 model MembersOnTeam {
   created_at DateTime @default(now()) @db.Timestamptz(6)
-  team       Team     @relation(fields: [teamId], references: [id])
   teamId     String   @db.Uuid
-  profile    Profile  @relation(fields: [profileId], references: [id])
   profileId  String   @db.Uuid
+  profile    Profile  @relation(fields: [profileId], references: [id])
+  team       Team     @relation(fields: [teamId], references: [id])
 
   @@id([teamId, profileId])
 }
 
 model FutsalCenter {
-  id              String            @id @db.Uuid
-  created_at      DateTime          @default(now()) @db.Timestamptz(6)
-  name            String
-  avatar          String?
-  cover           String?
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  name       String
+  avatar     String?
+  locationId String?  @db.Uuid
+  ownerId    String?  @db.Uuid
+  cover      String?
+
+  matchesPlayed Int @default(0)
+  reviews       Review[]
+
   location        Location?         @relation(fields: [locationId], references: [id])
-  locationId      String?           @db.Uuid
   owner           Profile?          @relation(fields: [ownerId], references: [id])
-  ownerId         String?           @db.Uuid
-  MatchMakeTicket MatchMakeTicket[]
   Match           Match[]
+  MatchMakeTicket MatchMakeTicket[]
+}
+
+model Review {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at     DateTime     @default(now()) @db.Timestamptz(6)
+  rating         Float
+  message        String?
+  futsalCenter   FutsalCenter @relation(fields: [futsalCenterId], references: [id])
+  futsalCenterId String       @db.Uuid
+  reviewer       Profile      @relation(fields: [reviewerId], references: [id])
+  reviewerId     String       @db.Uuid
 }
 
 model MatchMakeTicket {
-  id         String   @id @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   created_at DateTime @default(now()) @db.Timestamptz(6)
   status     String
   message    String?
 
-  futsalCenter   FutsalCenter @relation(fields: [futsalCenterId], references: [id])
-  futsalCenterId String       @db.Uuid
-
+  futsalCenter   FutsalCenter  @relation(fields: [futsalCenterId], references: [id])
+  futsalCenterId String        @db.Uuid
   time           DateTime
   duration       Int
+  bookingFee     Float
+  challengeType  challengetype
 
-  challenger   Profile @relation("Callenger", fields: [challengerId], references: [id])
-  challengerId String  @db.Uuid
+  challenger   Profile  @relation("Callenger", fields: [challengerId], references: [id])
+  challengerId String   @db.Uuid
+  opponent     Profile? @relation("Opponent", fields: [opponentId], references: [id])
+  opponentId   String?  @db.Uuid
+  match        Match?   @relation(fields: [matchId], references: [id])
+  matchId      String?  @db.Uuid
+}
 
-  opponent   Profile? @relation("Opponent", fields: [opponentId], references: [id])
-  opponentId String?  @db.Uuid
-
-  match   Match?  @relation(fields: [matchId], references: [id])
-  matchId String? @db.Uuid
+// NOTE: this needs to be in small letters
+// we're using db rpc to get the enum values. in the function procedure it is automatically 
+// making it to small letters and it is returning the values only if the type is in small letters. 
+enum challengetype {
+  FRIENDLY
+  LOSERS_PAY
+  CHALLENGE
 }
 
 model Match {
-  id         String   @id @db.Uuid
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  cover      String?
-  commentary String?
-  status     String
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  description      String?
+  status           String
+  futsalCenterId   String            @db.Uuid
+  time             DateTime
+  duration         Int
+  bookingFee       Float
+  challengeType    challengetype
+  challengerTeamId String?           @db.Uuid
+  opponentTeamId   String?           @db.Uuid
+  cover            String?
+  challengerTeam   LockedTeam?       @relation("Challenger Team", fields: [challengerTeamId], references: [id])
+  futsalCenter     FutsalCenter      @relation(fields: [futsalCenterId], references: [id])
+  opponentTeam     LockedTeam?       @relation("Opponent Team", fields: [opponentTeamId], references: [id])
+  MatchMakeTicket  MatchMakeTicket[]
+  MatchStats       MatchStats[]
+}
 
-  futsalCenter   FutsalCenter @relation(fields: [futsalCenterId], references: [id])
-  futsalCenterId String       @db.Uuid
-  time           DateTime
-  duration       Int
+model MatchStats {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime     @default(now()) @db.Timestamptz(6)
+  score       String
+  matchId     String       @db.Uuid
+  matchEvents MatchEvent[]
+  match       Match        @relation(fields: [matchId], references: [id])
+}
 
-  challengerTeam   Team?   @relation("Challenger Team", fields: [challengerTeamId], references: [id])
-  challengerTeamId String? @db.Uuid
+model MatchEvent {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at   DateTime    @default(now()) @db.Timestamptz(6)
+  time         Int
+  type         String
+  playerId     String      @db.Uuid
+  MatchStats   MatchStats? @relation(fields: [matchStatsId], references: [id])
+  matchStatsId String?     @db.Uuid
+}
 
-  opponentTeam   Team?   @relation("Opponent Team", fields: [opponentTeamId], references: [id])
-  opponentTeamId String? @db.Uuid
+model LockedTeam {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  name                String
+  avatar              String?
+  cover               String?
+  challengers         Match[]               @relation("Challenger Team")
+  opponents           Match[]               @relation("Opponent Team")
+  MembersOnLockedTeam MembersOnLockedTeam[]
+}
 
-  MatchMakeTicket MatchMakeTicket[]
+model MembersOnLockedTeam {
+  created_at   DateTime   @default(now()) @db.Timestamptz(6)
+  lockedTeamId String     @db.Uuid
+  profileId    String     @db.Uuid
+  profile      Profile    @relation(fields: [profileId], references: [id])
+  lockedTeam   LockedTeam @relation(fields: [lockedTeamId], references: [id])
+
+  @@id([lockedTeamId, profileId])
 }
