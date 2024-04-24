@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -6,6 +6,7 @@ import { useContext, useState } from "react";
 import { UserContext } from "../UserContext";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const insertTeam = async (formData: FormData, user: User | null) => {
   const supabase = createClient();
@@ -25,7 +26,11 @@ const insertTeam = async (formData: FormData, user: User | null) => {
   const teamId = data.id;
   const profileId = user?.id;
 
-  const { data: data2, error: error2 } = await supabase.from<any, any>("MembersOnTeam").insert([{ teamId, profileId }]).select("*").single();
+  const { data: data2, error: error2 } = await supabase
+    .from<any, any>("MembersOnTeam")
+    .insert([{ teamId, profileId, role: "LEADER", status: "ACCEPTED" }])
+    .select("*")
+    .single();
   if (error2) {
     console.log(error2);
     try {
@@ -40,24 +45,29 @@ const insertTeam = async (formData: FormData, user: User | null) => {
   return data;
 };
 
-export default function CreateTeam({ onClose }: { onClose: () => void }){
+export default function CreateTeam({ onClose }: { onClose: () => void }) {
   const user = useContext(UserContext);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();    
+    e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
     await insertTeam(formData, user);
     onClose();
     router.push("/");
-    setLoading(false);    
+    setLoading(false);
   };
 
   return (
     <div className="flex flex-col items-center justify-center">
+      <div className="flex items-center justify-between gap-4">
       <h2 className="text-4xl font-bold text-center"> Create a Team </h2>
+      <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded-md">
+        Close
+      </button>
+      </div>
       <form className="flex flex-col items-center justify-center" onSubmit={handleSubmit}>
         <input name="teamName" type="text" placeholder="Team Name" className="border-2 border-gray-300 rounded-md p-2 mb-4" />
         {/* <input type="text" placeholder="Team Description" className="border-2 border-gray-300 rounded-md p-2 mb-4" /> */}

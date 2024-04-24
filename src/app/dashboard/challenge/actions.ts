@@ -12,12 +12,13 @@ export function createMatchMakeTicket(formData: FormData){
     const data = { 
         bookingFee: Number(formData.get("bookingFee") as string),        
         challengerId: formData.get("challengerId") as string,        
+        challengerTeamId: formData.get("challengerTeamId") as string,
         challengeType: challengeType,
         duration: Number(formData.get("duration") as string),        
         futsalCenterId: formData.get("futsalCenterId") as string,        
         matchId: null,
         message: formData.get("message") as string,
-        opponentId: formData.get("opponentId") as string,
+        opponentId: null,
         status: "pending",
         time: formData.get("time") as string,        
     }

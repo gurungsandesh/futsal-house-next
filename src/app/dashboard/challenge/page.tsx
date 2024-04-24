@@ -5,6 +5,7 @@ import { createMatchMakeTicket } from "./actions";
 import { UserContext } from "../UserContext";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function PostChallengePage() {
   const user = useContext(UserContext);
@@ -136,7 +137,14 @@ export default function PostChallengePage() {
       </h1>
 
       {loading && <h1> Loading... </h1>}
-      {!loading && userTeams.length === 0 && <h1> You need to create a team first </h1>}
+      {!loading && userTeams.length === 0 && 
+      <section className="flex items-center justify-center">
+        <h1 className="text-2xl font-bold"> You need to be in a team to post a challenge </h1>
+      </section>}
+
+      <Link href="/dashboard" className="mb-4">
+          <p className="text-white bg-red-500 px-4 py-2 rounded-md"> Go Dashboard </p>
+        </Link>
 
       {!loading && userTeams.length > 0 && (
         <form className="flex flex-col items-center justify-center" onSubmit={handlePostChallenge}>
@@ -172,12 +180,11 @@ export default function PostChallengePage() {
           <label htmlFor="datetime">Match Date and Time (6 hour ahead of the match)</label>
           <input name="time" type="datetime-local" className="border-2 border-gray-300 rounded-md p-2 mb-4" min={minDate} defaultValue={minDate} />
 
-          <label htmlFor="myTeam"> Your Team </label>
-          <select name="myTeam" className="border-2 border-gray-300 rounded-md p-2 mb-4">
+          <label htmlFor="challengerTeamId"> Your Team </label>
+          <select name="challengerTeamId" className="border-2 border-gray-300 rounded-md p-2 mb-4">
             {userTeams.map((team) => (
               <option key={team.id} value={team.id}>
-                {" "}
-                {team.name}{" "}
+                {team.name}
               </option>
             ))}
           </select>

@@ -44,20 +44,34 @@ model Location {
 }
 
 model Team {
-  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_at    DateTime        @default(now()) @db.Timestamptz(6)
-  name          String
-  avatar        String?
-  cover         String?
-  MembersOnTeam MembersOnTeam[]
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  name            String
+  avatar          String?
+  cover           String?
+  MembersOnTeam   MembersOnTeam[]
+  challengerTickets MatchMakeTicket[] @relation("ChallengerTeam")
+}
+
+enum TeamRole {
+  LEADER
+  MEMBER
+}
+
+enum TeamMemberStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
 model MembersOnTeam {
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  teamId     String   @db.Uuid
-  profileId  String   @db.Uuid
-  profile    Profile  @relation(fields: [profileId], references: [id])
-  team       Team     @relation(fields: [teamId], references: [id])
+  created_at DateTime         @default(now()) @db.Timestamptz(6)
+  teamId     String           @db.Uuid
+  profileId  String           @db.Uuid
+  profile    Profile          @relation(fields: [profileId], references: [id])
+  team       Team             @relation(fields: [teamId], references: [id])
+  role       TeamRole         @default(MEMBER)
+  status     TeamMemberStatus @default(PENDING)
 
   @@id([teamId, profileId])
 }
@@ -72,7 +86,7 @@ model FutsalCenter {
   ownerId    String?  @db.Uuid
   cover      String?
 
-  matchesPlayed Int @default(0)
+  matchesPlayed Int      @default(0)
   reviews       Review[]
 
   location        Location?         @relation(fields: [locationId], references: [id])
@@ -105,12 +119,15 @@ model MatchMakeTicket {
   bookingFee     Float
   challengeType  challengetype
 
-  challenger   Profile  @relation("Callenger", fields: [challengerId], references: [id])
-  challengerId String   @db.Uuid
-  opponent     Profile? @relation("Opponent", fields: [opponentId], references: [id])
-  opponentId   String?  @db.Uuid
-  match        Match?   @relation(fields: [matchId], references: [id])
-  matchId      String?  @db.Uuid
+  challenger       Profile @relation("Callenger", fields: [challengerId], references: [id])
+  challengerId     String  @db.Uuid
+  challengerTeam   Team   @relation("ChallengerTeam", fields: [challengerTeamId], references: [id])
+  challengerTeamId String @db.Uuid
+
+  opponent   Profile? @relation("Opponent", fields: [opponentId], references: [id])
+  opponentId String?  @db.Uuid
+  match      Match?   @relation(fields: [matchId], references: [id])
+  matchId    String?  @db.Uuid
 }
 
 // NOTE: this needs to be in small letters
@@ -173,11 +190,13 @@ model LockedTeam {
 }
 
 model MembersOnLockedTeam {
-  created_at   DateTime   @default(now()) @db.Timestamptz(6)
-  lockedTeamId String     @db.Uuid
-  profileId    String     @db.Uuid
-  profile      Profile    @relation(fields: [profileId], references: [id])
-  lockedTeam   LockedTeam @relation(fields: [lockedTeamId], references: [id])
+  created_at   DateTime         @default(now()) @db.Timestamptz(6)
+  lockedTeamId String           @db.Uuid
+  profileId    String           @db.Uuid
+  profile      Profile          @relation(fields: [profileId], references: [id])
+  lockedTeam   LockedTeam       @relation(fields: [lockedTeamId], references: [id])
+  role         TeamRole         @default(MEMBER)
+  status       TeamMemberStatus @default(PENDING)
 
   @@id([lockedTeamId, profileId])
 }

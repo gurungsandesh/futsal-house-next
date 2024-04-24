@@ -232,6 +232,7 @@ export type Database = {
         Row: {
           bookingFee: number
           challengerId: string
+          challengerTeamId: string
           challengeType: Database["public"]["Enums"]["challengetype"]
           created_at: string
           duration: number
@@ -246,6 +247,7 @@ export type Database = {
         Insert: {
           bookingFee: number
           challengerId: string
+          challengerTeamId: string
           challengeType: Database["public"]["Enums"]["challengetype"]
           created_at?: string
           duration: number
@@ -260,6 +262,7 @@ export type Database = {
         Update: {
           bookingFee?: number
           challengerId?: string
+          challengerTeamId?: string
           challengeType?: Database["public"]["Enums"]["challengetype"]
           created_at?: string
           duration?: number
@@ -277,6 +280,13 @@ export type Database = {
             columns: ["challengerId"]
             isOneToOne: false
             referencedRelation: "Profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "MatchMakeTicket_challengerTeamId_fkey"
+            columns: ["challengerTeamId"]
+            isOneToOne: false
+            referencedRelation: "Team"
             referencedColumns: ["id"]
           },
           {
@@ -336,16 +346,22 @@ export type Database = {
           created_at: string
           lockedTeamId: string
           profileId: string
+          role: Database["public"]["Enums"]["TeamRole"]
+          status: Database["public"]["Enums"]["TeamMemberStatus"]
         }
         Insert: {
           created_at?: string
           lockedTeamId: string
           profileId: string
+          role?: Database["public"]["Enums"]["TeamRole"]
+          status?: Database["public"]["Enums"]["TeamMemberStatus"]
         }
         Update: {
           created_at?: string
           lockedTeamId?: string
           profileId?: string
+          role?: Database["public"]["Enums"]["TeamRole"]
+          status?: Database["public"]["Enums"]["TeamMemberStatus"]
         }
         Relationships: [
           {
@@ -368,16 +384,22 @@ export type Database = {
         Row: {
           created_at: string
           profileId: string
+          role: Database["public"]["Enums"]["TeamRole"]
+          status: Database["public"]["Enums"]["TeamMemberStatus"]
           teamId: string
         }
         Insert: {
           created_at?: string
           profileId: string
+          role?: Database["public"]["Enums"]["TeamRole"]
+          status?: Database["public"]["Enums"]["TeamMemberStatus"]
           teamId: string
         }
         Update: {
           created_at?: string
           profileId?: string
+          role?: Database["public"]["Enums"]["TeamRole"]
+          status?: Database["public"]["Enums"]["TeamMemberStatus"]
           teamId?: string
         }
         Relationships: [
@@ -515,6 +537,8 @@ export type Database = {
     }
     Enums: {
       challengetype: "FRIENDLY" | "LOSERS_PAY" | "CHALLENGE"
+      TeamMemberStatus: "PENDING" | "ACCEPTED" | "REJECTED"
+      TeamRole: "LEADER" | "MEMBER"
     }
     CompositeTypes: {
       [_ in never]: never
