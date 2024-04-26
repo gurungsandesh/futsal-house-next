@@ -1,36 +1,43 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../UserContext";
 import Link from "next/link";
+import { QueryData } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { MatchMakeTicket, Team } from "@/types/globals.types";
 
 const COUNT = 1;
 
 export default function MatchMakePage() {
   const supabase = createClient();
+  const router = useRouter();
   const user = useContext(UserContext);
-  const [matchMakeTickets, setMatchMakeTickets] = useState<any[]>([]);
+  const [matchMakeTickets, setMatchMakeTickets] = useState<MatchMakeTicket[]>([]);
   const [userTeams, setUserTeams] = useState<any[]>([]);
   const [totalTickets, setTotalTickets] = useState<number>(0);
   const [offset, setOffset] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const selectedTeamRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     const fetchTickets = async (offset: number) => {
       const from = offset * COUNT;
       const to = from + COUNT - 1;
       const userId = user?.id;
-      if (!userId) return;
+      if (!userId || userTeams.length <= 0) return;
 
       const { data, error } = await supabase
         .from("MatchMakeTicket")
         .select("*")
-        .eq("status", "pending")
-        .gt("time", new Date().toISOString())
-        .neq("challengerId", userId)
+        .eq("status", "OPEN")
+        .gt("matchDateTime", new Date().toISOString())
+        .not("challengerTeamId", "in", `(${userTeams.map((team) => team.id).toString()})`)
         .range(from, to)
-        .order("time", { ascending: true });
+        .order("matchDateTime", { ascending: true });
 
       if (!data || error) return console.error(error);
       return data;
@@ -40,8 +47,8 @@ export default function MatchMakePage() {
       const { data, error } = await supabase
         .from("MatchMakeTicket")
         .select("id", { count: "exact" })
-        .eq("status", "pending")
-        .gt("time", new Date().toISOString())
+        .eq("status", "OPEN")
+        .gt("matchDateTime", new Date().toISOString())
         .neq("challengerId", user?.id);
 
       if (!data || error) return console.error(error);
@@ -57,7 +64,7 @@ export default function MatchMakePage() {
       setTotalTickets(total);
       setLoading(false);
     })();
-  }, [offset, supabase, user?.id]);
+  }, [offset, supabase, user?.id, userTeams]);
 
   useEffect(() => {
     const fetchUserTeams = async () => {
@@ -84,9 +91,52 @@ export default function MatchMakePage() {
       setUserTeams(teamData);
       setLoading(false);
     };
-
     (async () => await fetchUserTeams())();
   }, [supabase, user?.id]);
+
+  const handleOnMatchMake = async () => {
+    if (!user?.id) return console.log("No user id");
+    const userId = user?.id;
+    const ticketId = matchMakeTickets[0].id;
+
+    const challengerTeamId = selectedTeamRef.current?.value as string;
+    const opponentTeamId = matchMakeTickets[0].challengerTeamId;
+
+    const challengerMembers = await getTeamMembers(challengerTeamId);
+    const opponentMembers = await getTeamMembers(opponentTeamId);
+
+    const commonMembers = await checkForCommonMembers(challengerMembers, opponentMembers);
+    if (commonMembers.length) throw new Error("Common Members Found");
+
+    
+
+    try {
+      console.log(userId, ticketId, challengerTeamId, opponentTeamId);
+      const { data: newMatchId, error } = await supabase.rpc("handle_match_make", {
+        user_id: userId,
+        ticket_id: ticketId,
+        challenger_team_id: challengerTeamId,
+        opponent_team_id: opponentTeamId,
+      });
+
+      // redirect to match page
+      router.push(`/dashboard/match/${newMatchId}`);
+    } catch (error) {
+      console.log(error);
+      // console.error(error);
+    }
+  };
+
+  const getTeamMembers = async (teamId: string) => {
+    const { data, error } = await supabase.from("MembersOnTeam").select("profileId").eq("teamId", teamId);
+    if (!data || error) throw error;
+    return data;
+  };
+
+  const checkForCommonMembers = async (team1: any[], team2: any[]) => {
+    const commonMembers = team1.filter((member) => team2.includes(member));
+    return commonMembers;
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center p-24">
@@ -138,7 +188,7 @@ export default function MatchMakePage() {
 
             <div className="flex items-center justify-center">
               <h3 className="text-2xl font-bold text-center"> Time </h3>
-              <p> {matchMakeTickets[0].time} </p>
+              <p> {matchMakeTickets[0].matchDateTime} </p>
             </div>
 
             <div className="flex items-center justify-center">
@@ -168,8 +218,24 @@ export default function MatchMakePage() {
               <p className="text-green-500 text-bold"> {matchMakeTickets[0].bookingFee} per Team</p>
             </div>
           </section>
+
+          <hr className="w-full border-2 border-green-300 my-4" />
+
+          <label htmlFor="team"> Select Your Team </label>
+          <select ref={selectedTeamRef} name="team" className="border-2 border-gray-300 rounded-md p-2 mb-4">
+            {userTeams.map((team) => (
+              <option key={team.id} value={team.id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
+
           <section className="flex items-center justify-center gap-4">
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-md"> Match Make ⚔️ </button>
+            <button className="bg-blue-500 text-white px-4 py-2 rounded-md" onClick={handleOnMatchMake}>
+              {" "}
+              Match Make ⚔️{" "}
+            </button>
+
             <button className="bg-red-500 text-white px-4 py-2 rounded-md" onClick={() => setOffset(offset + 1)}>
               {" "}
               Next Candidate ⚽{" "}

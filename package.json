@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "gen-types": "npx supabase gen types typescript --project-id hoypvbeqvywtryqekfqt > src/types/database.types.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.12.1",

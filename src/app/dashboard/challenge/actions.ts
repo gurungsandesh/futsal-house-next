@@ -19,8 +19,8 @@ export function createMatchMakeTicket(formData: FormData){
         matchId: null,
         message: formData.get("message") as string,
         opponentId: null,
-        status: "pending",
-        time: formData.get("time") as string,        
+        status: "OPEN",
+        matchDateTime: formData.get("matchDateTime") as string,        
     }
     
     return supabase.from("MatchMakeTicket").insert(data).select("*").single();

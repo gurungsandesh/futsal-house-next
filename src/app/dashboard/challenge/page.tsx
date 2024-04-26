@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function PostChallengePage() {
   const user = useContext(UserContext);
-  const router = useRouter();  
+  const router = useRouter(); 
   const supabase = createClient();
   
   const [manualFutsalInput, setManualFutsalInput] = useState(false);
@@ -178,7 +178,7 @@ export default function PostChallengePage() {
           )}
 
           <label htmlFor="datetime">Match Date and Time (6 hour ahead of the match)</label>
-          <input name="time" type="datetime-local" className="border-2 border-gray-300 rounded-md p-2 mb-4" min={minDate} defaultValue={minDate} />
+          <input name="matchDateTime" type="datetime-local" className="border-2 border-gray-300 rounded-md p-2 mb-4" min={minDate} defaultValue={minDate} />
 
           <label htmlFor="challengerTeamId"> Your Team </label>
           <select name="challengerTeamId" className="border-2 border-gray-300 rounded-md p-2 mb-4">

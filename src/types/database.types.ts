@@ -129,7 +129,7 @@ export type Database = {
       Match: {
         Row: {
           bookingFee: number
-          challengerTeamId: string | null
+          challengerTeamId: string
           challengeType: Database["public"]["Enums"]["challengetype"]
           cover: string | null
           created_at: string
@@ -137,13 +137,14 @@ export type Database = {
           duration: number
           futsalCenterId: string
           id: string
-          opponentTeamId: string | null
+          matchDateTime: string
+          matchMakeTicketId: string | null
+          opponentTeamId: string
           status: string
-          time: string
         }
         Insert: {
           bookingFee: number
-          challengerTeamId?: string | null
+          challengerTeamId: string
           challengeType: Database["public"]["Enums"]["challengetype"]
           cover?: string | null
           created_at?: string
@@ -151,13 +152,14 @@ export type Database = {
           duration: number
           futsalCenterId: string
           id?: string
-          opponentTeamId?: string | null
+          matchDateTime: string
+          matchMakeTicketId?: string | null
+          opponentTeamId: string
           status: string
-          time: string
         }
         Update: {
           bookingFee?: number
-          challengerTeamId?: string | null
+          challengerTeamId?: string
           challengeType?: Database["public"]["Enums"]["challengetype"]
           cover?: string | null
           created_at?: string
@@ -165,9 +167,10 @@ export type Database = {
           duration?: number
           futsalCenterId?: string
           id?: string
-          opponentTeamId?: string | null
+          matchDateTime?: string
+          matchMakeTicketId?: string | null
+          opponentTeamId?: string
           status?: string
-          time?: string
         }
         Relationships: [
           {
@@ -185,6 +188,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "Match_matchMakeTicketId_fkey"
+            columns: ["matchMakeTicketId"]
+            isOneToOne: false
+            referencedRelation: "MatchMakeTicket"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "Match_opponentTeamId_fkey"
             columns: ["opponentTeamId"]
             isOneToOne: false
@@ -196,26 +206,26 @@ export type Database = {
       MatchEvent: {
         Row: {
           created_at: string
+          duration: number
           id: string
           matchStatsId: string | null
           playerId: string
-          time: number
           type: string
         }
         Insert: {
           created_at?: string
+          duration: number
           id?: string
           matchStatsId?: string | null
           playerId: string
-          time: number
           type: string
         }
         Update: {
           created_at?: string
+          duration?: number
           id?: string
           matchStatsId?: string | null
           playerId?: string
-          time?: number
           type?: string
         }
         Relationships: [
@@ -238,11 +248,11 @@ export type Database = {
           duration: number
           futsalCenterId: string
           id: string
+          matchDateTime: string
           matchId: string | null
           message: string | null
           opponentId: string | null
           status: string
-          time: string
         }
         Insert: {
           bookingFee: number
@@ -253,11 +263,11 @@ export type Database = {
           duration: number
           futsalCenterId: string
           id?: string
+          matchDateTime: string
           matchId?: string | null
           message?: string | null
           opponentId?: string | null
-          status: string
-          time: string
+          status?: string
         }
         Update: {
           bookingFee?: number
@@ -268,11 +278,11 @@ export type Database = {
           duration?: number
           futsalCenterId?: string
           id?: string
+          matchDateTime?: string
           matchId?: string | null
           message?: string | null
           opponentId?: string | null
           status?: string
-          time?: string
         }
         Relationships: [
           {
@@ -294,13 +304,6 @@ export type Database = {
             columns: ["futsalCenterId"]
             isOneToOne: false
             referencedRelation: "FutsalCenter"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "MatchMakeTicket_matchId_fkey"
-            columns: ["matchId"]
-            isOneToOne: false
-            referencedRelation: "Match"
             referencedColumns: ["id"]
           },
           {
@@ -533,6 +536,15 @@ export type Database = {
           enum_type: string
         }
         Returns: Json
+      }
+      handle_match_make: {
+        Args: {
+          user_id: string
+          ticket_id: string
+          opponent_team_id: string
+          challenger_team_id: string
+        }
+        Returns: string
       }
     }
     Enums: {
