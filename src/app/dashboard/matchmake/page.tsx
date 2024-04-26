@@ -96,24 +96,25 @@ export default function MatchMakePage() {
 
   const handleOnMatchMake = async () => {
     if (!user?.id) return console.log("No user id");
-    const userId = user?.id;
+    const opponentId = user?.id;
+    const challengerId = matchMakeTickets[0].challengerId;
     const ticketId = matchMakeTickets[0].id;
 
     const challengerTeamId = selectedTeamRef.current?.value as string;
     const opponentTeamId = matchMakeTickets[0].challengerTeamId;
 
-    const challengerMembers = await getTeamMembers(challengerTeamId);
-    const opponentMembers = await getTeamMembers(opponentTeamId);
-
-    const commonMembers = await checkForCommonMembers(challengerMembers, opponentMembers);
-    if (commonMembers.length) throw new Error("Common Members Found");
-
-    
+    // const challengerMembers = await getTeamMembers(challengerTeamId);
+    // const opponentMembers = await getTeamMembers(opponentTeamId);
+    // const commonMembers = await checkForCommonMembers(challengerMembers, opponentMembers);
+    // if (commonMembers.length) throw new Error("Common Members Found");
 
     try {
-      console.log(userId, ticketId, challengerTeamId, opponentTeamId);
+      console.log({
+        challengerId, opponentId, ticketId, challengerTeamId, opponentTeamId
+      });
       const { data: newMatchId, error } = await supabase.rpc("handle_match_make", {
-        user_id: userId,
+        challenger_id: challengerId,
+        opponent_id: opponentId,
         ticket_id: ticketId,
         challenger_team_id: challengerTeamId,
         opponent_team_id: opponentTeamId,

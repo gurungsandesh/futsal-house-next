@@ -7,6 +7,7 @@ import { UserContext } from "../UserContext";
 import CreateTeam from "./createTeam";
 import JoinTeam from "./joinTeam";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const leaveTeam = async (teamId: string, user: User | null) => {
   const supabase = createClient();
@@ -71,7 +72,7 @@ export default function YourTeam() {
     const fetchTeam = async () => {
       setLoading(true);
       if (!user?.id) return console.log("No user id");
-      const { data, error } = await supabase.from("MembersOnTeam").select("*").eq("profileId", user?.id);
+      const { data, error } = await supabase.from("MembersOnTeam").select("*, team:MembersOnTeam_teamId_fkey(*)").eq("profileId", user?.id);
 
       if (!data || error) {
         console.log(error);
@@ -99,6 +100,7 @@ export default function YourTeam() {
               <thead>
                 <tr>
                   <th className="border border-gray-600"> Team ID </th>
+                  <th className="border border-gray-600"> Team Name </th>
                   <th className="border border-gray-600"> Actions </th>
                 </tr>
               </thead>
@@ -106,6 +108,7 @@ export default function YourTeam() {
                 {teams.map((team: any) => (
                   <tr key={team.teamId}>
                     <td className="border border-gray-600"> {team.teamId} </td>
+                    <td className="border border-gray-600"> {team.team.name} </td>
                     <td className="border border-gray-600">
                       <button
                         className="bg-red-500 text-white px-4 py-2 rounded-md"
@@ -134,15 +137,18 @@ export default function YourTeam() {
       {joinTeamOpen && <JoinTeam onClose={onClose} />}
 
       <div className="flex items-center justify-center gap-4">
-        <button className="bg-green-500 text-white px-4 py-2 rounded-md" onClick={onClickCreateTeam}>
+        <button className="bg-green-500 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-md" onClick={onClickCreateTeam}>
           {" "}
           Create a Team{" "}
         </button>
         {/* <button className="bg-orange-500 text-white px-4 py-2 rounded-md" onClick={() => { }}> Refresh </button> */}
-        <button className="bg-blue-500 text-white px-4 py-2 rounded-md" onClick={onClickJoinTeam}>
+        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-md" onClick={onClickJoinTeam}>
           {" "}
           Join a Team{" "}
         </button>
+        <Link href="/dashboard/teams">
+          <button className="bg-purple-500 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-md"> View All Teams </button>
+        </Link>
       </div>
     </section>
   );

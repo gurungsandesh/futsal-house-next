@@ -10,16 +10,20 @@ datasource db {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Profile {
-  id                  String                @id @default(dbgenerated("auth.uid()")) @db.Uuid
-  created_at          DateTime              @default(now()) @db.Timestamptz(6)
-  first_name          String?
-  last_name           String?
-  locationId          String?               @db.Uuid
-  avatar              String?
-  cover               String?
-  FutsalCenter        FutsalCenter[]
-  challengerTickets   MatchMakeTicket[]     @relation("Callenger")
-  opponentTickets     MatchMakeTicket[]     @relation("Opponent")
+  id                String            @id @default(dbgenerated("auth.uid()")) @db.Uuid
+  created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  first_name        String?
+  last_name         String?
+  locationId        String?           @db.Uuid
+  avatar            String?
+  cover             String?
+  futsalCenters     FutsalCenter[]
+
+  challengerTickets MatchMakeTicket[] @relation("Callenger")
+  opponentTickets   MatchMakeTicket[] @relation("Opponent")
+  challengerMatches Match[] @relation("Callenger")
+  opponentMatches   Match[] @relation("Opponent")
+
   membersOnTeam       MembersOnTeam[]
   location            Location?             @relation(fields: [locationId], references: [id])
   membersOnLockedTeam MembersOnLockedTeam[]
@@ -129,8 +133,8 @@ model MatchMakeTicket {
   // opponentTeam Team?  @relation("OpponentTeam", fields: [opponentTeamId], references: [id])
   // opponentTeamId String? @db.Uuid
 
-  match Match? @relation
-  matchId String? @db.Uuid @unique
+  match   Match?  @relation
+  matchId String? @unique @db.Uuid
 }
 
 // enum MatchMakeTicketStatus{ 
@@ -150,21 +154,27 @@ enum challengetype {
 }
 
 model Match {
-  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_at        DateTime         @default(now()) @db.Timestamptz(6)
-  cover             String?
-  description       String?
-  status            String
-  futsalCenter      FutsalCenter     @relation(fields: [futsalCenterId], references: [id])
-  futsalCenterId    String           @db.Uuid
-  matchDateTime     DateTime
-  duration          Int
-  bookingFee        Float
-  challengeType     challengetype
-  challengerTeamId  String           @db.Uuid
-  challengerTeam    LockedTeam       @relation("Challenger Team", fields: [challengerTeamId], references: [id])
-  opponentTeamId    String           @db.Uuid
-  opponentTeam      LockedTeam?      @relation("Opponent Team", fields: [opponentTeamId], references: [id])
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at     DateTime      @default(now()) @db.Timestamptz(6)
+  cover          String?
+  description    String?
+  status         String
+  futsalCenter   FutsalCenter  @relation(fields: [futsalCenterId], references: [id])
+  futsalCenterId String        @db.Uuid
+  matchDateTime  DateTime
+  duration       Int
+  bookingFee     Float
+  challengeType  challengetype
+
+  challengerId String  @db.Uuid
+  challenger   Profile @relation("Callenger", fields: [challengerId], references: [id])
+  opponentId String   @db.Uuid
+  opponent   Profile? @relation("Opponent", fields: [opponentId], references: [id])
+
+  challengerTeamId String      @db.Uuid
+  challengerTeam   LockedTeam  @relation("Challenger Team", fields: [challengerTeamId], references: [id], onDelete: Cascade)
+  opponentTeamId   String      @db.Uuid
+  opponentTeam     LockedTeam? @relation("Opponent Team", fields: [opponentTeamId], references: [id], onDelete: Cascade)
 
   matchMakeTicket   MatchMakeTicket? @relation(fields: [matchMakeTicketId], references: [id])
   matchMakeTicketId String?          @unique @db.Uuid
@@ -191,18 +201,19 @@ model MatchEvent {
 }
 
 model LockedTeam {
-  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_at          DateTime              @default(now()) @db.Timestamptz(6)
-  name                String
-  avatar              String?
-  cover               String?
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  name       String
+  avatar     String?
+  cover      String?
 
   // TODO: add original team
   // originalTeam        Team                  @relation(fields: [originalTeamId], references: [id])  
   // originalTeamId     String                @db.Uuid
-  
-  challengers         Match[]               @relation("Challenger Team")
+
+  challengers         Match[]               @relation("Challenger Team") 
   opponents           Match[]               @relation("Opponent Team")
+
   membersOnLockedTeam MembersOnLockedTeam[]
 }
 
@@ -210,8 +221,8 @@ model MembersOnLockedTeam {
   created_at   DateTime         @default(now()) @db.Timestamptz(6)
   lockedTeamId String           @db.Uuid
   profileId    String           @db.Uuid
-  profile      Profile          @relation(fields: [profileId], references: [id])
-  lockedTeam   LockedTeam       @relation(fields: [lockedTeamId], references: [id])
+  profile      Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  lockedTeam   LockedTeam       @relation(fields: [lockedTeamId], references: [id], onDelete: Cascade)
   role         TeamRole         @default(MEMBER)
   status       TeamMemberStatus @default(PENDING)
 

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { logout } from "./actions";
 import { UserContext } from "./UserContext";
 import YourTeam from "./_sections/yourTeam";
+import YourMatchMakeTickets from "./_sections/matchMakeTickets";
 import YourMatches from "./_sections/yourMatches";
 
 export default function DashboardPage() {
@@ -29,7 +30,8 @@ export default function DashboardPage() {
         </section>
 
         <YourTeam/>
-        <YourMatches/>
+        <YourMatchMakeTickets/>
+        <YourMatches />
 
         <section className="flex flex-col items-center justify-center">
           <button onClick={() => router.push("/dashboard/challenge")} className="bg-green-500 text-white px-4 py-2 rounded-md">

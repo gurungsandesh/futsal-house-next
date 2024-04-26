@@ -129,6 +129,7 @@ export type Database = {
       Match: {
         Row: {
           bookingFee: number
+          challengerId: string
           challengerTeamId: string
           challengeType: Database["public"]["Enums"]["challengetype"]
           cover: string | null
@@ -139,11 +140,13 @@ export type Database = {
           id: string
           matchDateTime: string
           matchMakeTicketId: string | null
+          opponentId: string
           opponentTeamId: string
           status: string
         }
         Insert: {
           bookingFee: number
+          challengerId: string
           challengerTeamId: string
           challengeType: Database["public"]["Enums"]["challengetype"]
           cover?: string | null
@@ -154,11 +157,13 @@ export type Database = {
           id?: string
           matchDateTime: string
           matchMakeTicketId?: string | null
+          opponentId: string
           opponentTeamId: string
           status: string
         }
         Update: {
           bookingFee?: number
+          challengerId?: string
           challengerTeamId?: string
           challengeType?: Database["public"]["Enums"]["challengetype"]
           cover?: string | null
@@ -169,10 +174,18 @@ export type Database = {
           id?: string
           matchDateTime?: string
           matchMakeTicketId?: string | null
+          opponentId?: string
           opponentTeamId?: string
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "Match_challengerId_fkey"
+            columns: ["challengerId"]
+            isOneToOne: false
+            referencedRelation: "Profile"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "Match_challengerTeamId_fkey"
             columns: ["challengerTeamId"]
@@ -192,6 +205,13 @@ export type Database = {
             columns: ["matchMakeTicketId"]
             isOneToOne: false
             referencedRelation: "MatchMakeTicket"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Match_opponentId_fkey"
+            columns: ["opponentId"]
+            isOneToOne: false
+            referencedRelation: "Profile"
             referencedColumns: ["id"]
           },
           {
@@ -539,10 +559,11 @@ export type Database = {
       }
       handle_match_make: {
         Args: {
-          user_id: string
+          challenger_id: string
+          opponent_id: string
           ticket_id: string
-          opponent_team_id: string
           challenger_team_id: string
+          opponent_team_id: string
         }
         Returns: string
       }
