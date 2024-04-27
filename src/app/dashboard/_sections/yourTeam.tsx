@@ -2,8 +2,8 @@
 
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { useContext, useEffect, useState } from "react";
-import useAuth, { UserContext } from "../../../components/AuthProvider";
+import { useEffect, useState } from "react";
+import useAuth from "../../../components/AuthProvider";
 import CreateTeam from "./createTeam";
 import JoinTeam from "./joinTeam";
 import { useRouter } from "next/navigation";
