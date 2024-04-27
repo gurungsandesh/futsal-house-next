@@ -3,16 +3,19 @@
 import useAuth from "@/components/AuthProvider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function MainSection() {
   const router = useRouter();
   const { user, loading, error } = useAuth();
 
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/dashboard");
+    }
+  }, [loading, router, user]);
+
   if (loading) return <h1> Checking credentials... </h1>;
-  if (user) {
-    router.push("/dashboard");
-    return <h1> Redirecting to dashboard... </h1>;
-  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">

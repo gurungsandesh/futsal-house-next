@@ -1,52 +1,61 @@
-"use client"
+"use client";
 
-import logo from "@/assets/Logo.png"
-import { Button } from '@/components/ui/button'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from '@/components/ui/input'
-import { zodResolver } from "@hookform/resolvers/zod"
-import Image from 'next/image'
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import logo from "@/assets/Logo.png";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import useAuth from "@/components/AuthProvider";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-const loginschema = z.object({
-  username: z.string().nonempty({ message: 'Username is requried' }),
-  password: z.string().nonempty({ message: 'Password is requried' }),
-})
+const loginschema: any = z.object({
+  email: z.string().nonempty().email({ message: "Invalid email" }),
+  password: z.string().nonempty({ message: "Password is requried" }),
+});
 
 export default function LoginPage() {
-
+  const { login, loading, user } = useAuth();
+  const router = useRouter();
 
   const loginform = useForm<z.infer<typeof loginschema>>({
     resolver: zodResolver(loginschema),
     defaultValues: {
-      username: "",
-      password: ""
-    }
-  })
+      email: "",
+      password: "",
+    },
+  });
 
-  function onSubmit(values: z.infer<typeof loginschema>) {
-    console.log("form values", values)
+  async function onSubmit(values: z.infer<typeof loginschema>) {
+    await login(values.email, values.password);
   }
 
-  return (
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/dashboard");
+    }
+  }, [loading, router, user]);
 
-    <div className="p-5 flex flex-col gap-5 h-screen" >
+  return (
+    <div className="p-5 flex flex-col gap-5 h-screen">
       <div className=" grid place-items-center">
         <Image src={logo} alt="Logo"></Image>
       </div>
 
       <Form {...loginform}>
-        <form onSubmit={loginform.handleSubmit(onSubmit)}>
+        <form onSubmit={loginform.handleSubmit(onSubmit)} method="POST">
           <div className="flex flex-col gap-5 ">
             <FormField
               control={loginform.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="username" {...field} />
+                    <Input type="email" placeholder="email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -60,7 +69,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input placeholder="password" {...field} />
+                    <Input type="password" placeholder="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -70,13 +79,9 @@ export default function LoginPage() {
             <Button type="submit" className="w-full">
               Login
             </Button>
-
-
-
           </div>
         </form>
       </Form>
-
-    </div >
-  )
+    </div>
+  );
 }

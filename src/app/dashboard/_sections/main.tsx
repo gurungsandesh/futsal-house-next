@@ -16,7 +16,7 @@ export default function MainSection() {
       <h1 className="text-6xl font-bold text-center">
         Welcome to <span className="text-blue-600"> Futsal House </span>
       </h1>
-      <button onClick={() => logout(router)} className="bg-red-500 text-white px-4 py-2 rounded-md">
+      <button onClick={() => logout()} className="bg-red-500 text-white px-4 py-2 rounded-md">
         Logout
       </button>
 

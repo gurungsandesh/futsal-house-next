@@ -6,12 +6,16 @@ type UserContextType = {
   user: User | null;
   loading: boolean;
   error: AuthError | null;
+  login: (email: string, password: string) => void;
+  logout: () => void;
 };
 
 export const UserContext = createContext<UserContextType>({
   user: null,
   loading: true,
   error: null,
+  login: () => {},
+  logout: () => {},
 });
 
 export default function useAuth() {
