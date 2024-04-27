@@ -1,41 +1,42 @@
-"use client"
+"use client";
 
-import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { ToastContainer } from "react-toastify";
-import { UserContext } from "./UserContext";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function PrivatePage({ children }: Readonly<{ children?: React.ReactNode }>) {
+  const currentPath = usePathname();
 
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-  const router = useRouter();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data?.user);
-      }
-      setLoading(false);
-    };
-    (async () => await fetchUser())();
-  }, [supabase.auth]);
-
-  if (loading) return <h1> Loading... </h1>;
-  if (!user) return router.push("/");
-
+  const activeClass = (path: string) => {
+    return currentPath === path ? "bg-gray-200" : "";
+  };
 
   return (
-    <>
-      {/* <ToastContainer /> FIXME: learn how to make it work in Next.js app router*/} 
-      <UserContext.Provider value={user}>
+    <section>
+      <nav className="bg-white shadow">
+        <div className="container mx-auto px-6 py-3">
+          <div className="flex justify-between items-center">
+            <Link href="/dashboard" className="text-2xl font-bold text-gray-800">
+              Futsal House
+            </Link>
+            <div className="flex">
+              <Link href="/dashboard" className={`${activeClass("/dashboard")} text-gray-800 text-sm font-semibold px-4 py-2 rounded-md hover:bg-gray-200`}>
+                Dashboard
+              </Link>
+              <Link href="/dashboard/teams" className={`${activeClass("/dashboard/teams")} text-gray-800 text-sm font-semibold px-4 py-2 rounded-md hover:bg-gray-200`}>
+                Teams
+              </Link>
+              <Link href="/dashboard/matches" className={`${activeClass("/dashboard/matches")} text-gray-800 text-sm font-semibold px-4 py-2 rounded-md hover:bg-gray-200`}>
+                Matches
+              </Link>              
+              <Link href="/logout" className={`${activeClass("/logout")} text-gray-800 text-sm font-semibold px-4 py-2 rounded-md hover:bg-gray-200`}>
+                Logout
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {children}
-      </UserContext.Provider>
-    </>
+    </section>
   );
 }

@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/client";
 import { useContext, useEffect, useRef, useState } from "react";
-import { UserContext } from "../UserContext";
+import useAuth, { UserContext } from "../../../components/AuthProvider";
 import Link from "next/link";
 import { QueryData } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ const COUNT = 1;
 export default function MatchMakePage() {
   const supabase = createClient();
   const router = useRouter();
-  const user = useContext(UserContext);
+  const { user } = useAuth();
   const [matchMakeTickets, setMatchMakeTickets] = useState<MatchMakeTicket[]>([]);
   const [userTeams, setUserTeams] = useState<any[]>([]);
   const [totalTickets, setTotalTickets] = useState<number>(0);

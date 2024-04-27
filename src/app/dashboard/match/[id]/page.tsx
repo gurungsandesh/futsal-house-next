@@ -1,8 +1,6 @@
 import { Match } from "@/types/globals.types";
 import { createClient } from "@/utils/supabase/server";
 
-
-
 export default async function MatchPage({ params }: { params: { id: string } }) {
     const { id } = params;
     const supabase = createClient();

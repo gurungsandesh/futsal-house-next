@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useContext, useState } from "react";
-import { UserContext } from "../UserContext";
+import useAuth, { UserContext } from "../../../components/AuthProvider";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -46,7 +46,7 @@ const insertTeam = async (formData: FormData, user: User | null) => {
 };
 
 export default function CreateTeam({ onClose }: { onClose: () => void }) {
-  const user = useContext(UserContext);
+  const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 

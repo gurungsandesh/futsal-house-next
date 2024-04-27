@@ -2,8 +2,8 @@
 
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { useContext, useEffect, useState } from "react";
-import { UserContext } from "../UserContext";
+import { useEffect, useState } from "react";
+import useAuth from "../../../components/AuthProvider";
 import CreateTeam from "./createTeam";
 import JoinTeam from "./joinTeam";
 import { useRouter } from "next/navigation";
@@ -48,7 +48,7 @@ export default function YourTeam() {
   const router = useRouter();
   const supabase = createClient();
 
-  const user = useContext(UserContext);
+  const { user } = useAuth();
   const [teams, setTeams] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
