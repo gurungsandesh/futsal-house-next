@@ -2,8 +2,8 @@
 
 import { LockedTeam, Match, MembersOnLockedTeam, Profile } from "@/types/globals.types";
 import { createClient } from "@/utils/supabase/client";
-import { use, useContext, useEffect, useState } from "react";
-import { UserContext } from "../UserContext";
+import { useEffect, useState } from "react";
+import useAuth from "../../../components/AuthProvider";
 import Link from "next/link";
 
 type LockedTeamExtended = LockedTeam & { members: MembersOnLockedTeam[] };
@@ -11,7 +11,7 @@ type MatchExtended = Match & { challenger: Profile; opponent: Profile; challenge
 
 export default function AllMatchesPage() {
   const supabase = createClient();
-  const user = useContext(UserContext);
+  const { user } = useAuth();
   const [matches, setMatches] = useState<MatchExtended[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -66,7 +66,7 @@ export default function AllMatchesPage() {
                   <span className="text-gray-500"> vs </span>
                   <span className="text-red-500 text-2xl">{match.opponentTeam.name}</span>
                 </p>
-            <p className="text-sm font-bold text-yellow-500">{match.status}</p>
+                <p className="text-sm font-bold text-yellow-500">{match.status}</p>
                 <p className="text-sm font-bold">Booking Fee : {match.bookingFee} </p>
               </div>
             </Link>

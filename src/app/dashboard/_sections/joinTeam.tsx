@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useContext, useRef, useState } from "react";
-import { UserContext } from "../UserContext";
+import useAuth, { UserContext } from "../../../components/AuthProvider";
 
 const joinTeam = async (teamId: string, user: User | null) => {
   const supabase = createClient();
@@ -18,7 +18,7 @@ const joinTeam = async (teamId: string, user: User | null) => {
 };
 
 export default function JoinTeam({ onClose }: { onClose: () => void }) {
-  const user = useContext(UserContext);
+  const { user } = useAuth();
   const supabase = createClient();
   const teamNameRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);

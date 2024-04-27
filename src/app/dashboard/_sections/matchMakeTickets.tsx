@@ -1,12 +1,12 @@
 import { createClient } from "@/utils/supabase/client";
-import { UserContext } from "../UserContext";
+import useAuth from "../../../components/AuthProvider";
 import { useContext, useEffect, useState } from "react";
 
 const fetchMatchMakeTickets = async (supabase: any, userId: string) => supabase.from("MatchMakeTicket").select("*").eq("challengerId", userId);
 
 export default function YourMatchMakeTickets() {
   const supabase = createClient();
-  const user = useContext(UserContext);
+  const { user } = useAuth();
   const [MatchMakeTickets, setMatchMakeTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

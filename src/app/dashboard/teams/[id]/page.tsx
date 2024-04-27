@@ -1,12 +1,12 @@
 "use client";
 
 import { useContext, useEffect, useState } from "react";
-import { UserContext } from "../../UserContext";
+import useAuth, { UserContext } from "../../../../components/AuthProvider";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 
 export default function TeamsPage({ params }: { params: { id: string } }) {
-  const user = useContext(UserContext);
+  const { user } = useAuth();
   const supabase = createClient();
   const [team, setTeam] = useState<any>(null);
   const [loading, setLoading] = useState(true);

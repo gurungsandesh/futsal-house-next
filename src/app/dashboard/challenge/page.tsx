@@ -2,13 +2,13 @@
 
 import { useContext, useEffect, useRef, useState } from "react";
 import { createMatchMakeTicket } from "./actions";
-import { UserContext } from "../UserContext";
+import useAuth, { UserContext } from "../../../components/AuthProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function PostChallengePage() {
-  const user = useContext(UserContext);
+  const { user } = useAuth();
   const router = useRouter(); 
   const supabase = createClient();
   
