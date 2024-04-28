@@ -1,6 +1,22 @@
+import { Profile } from "@/types/globals.types";
 import { createClient } from "@/utils/supabase/client";
 import { AuthError, User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+
+// type UserExtended = User & { profile: Profile };
+// const DEFAULT_USER: User = {
+//   id: "",
+//   aud: "",
+//   email: "",
+//   role: "",
+//   confirmed_at: "",
+//   confirmation_sent_at: "",
+//   created_at: "",
+//   last_sign_in_at: "",
+//   updated_at: "",
+//   user_metadata: {},
+//   app_metadata: {}
+// };
 
 export default function useUser() {
   const supabase = createClient();

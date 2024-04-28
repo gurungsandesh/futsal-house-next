@@ -72,8 +72,8 @@ model MembersOnTeam {
   created_at DateTime         @default(now()) @db.Timestamptz(6)
   teamId     String           @db.Uuid
   profileId  String           @db.Uuid
-  profile    Profile          @relation(fields: [profileId], references: [id])
-  team       Team             @relation(fields: [teamId], references: [id])
+  profile    Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  team       Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
   role       TeamRole         @default(MEMBER)
   status     TeamMemberStatus @default(PENDING)
 

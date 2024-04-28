@@ -1,77 +1,62 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
-import { useContext, useState } from "react";
-import useAuth, { UserContext } from "../../../components/AuthProvider";
-import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-
-const insertTeam = async (formData: FormData, user: User | null) => {
-  const supabase = createClient();
-
-  const teamName = formData.get("teamName") as string;
-  const { data, error } = await supabase
-    .from<any, any>("Team")
-    .insert([{ name: teamName }])
-    .select("*")
-    .single();
-
-  if (!data || error) {
-    console.log(error);
-    throw error;
-  }
-
-  const teamId = data.id;
-  const profileId = user?.id;
-
-  const { data: data2, error: error2 } = await supabase
-    .from<any, any>("MembersOnTeam")
-    .insert([{ teamId, profileId, role: "LEADER", status: "ACCEPTED" }])
-    .select("*")
-    .single();
-  if (error2) {
-    console.log(error2);
-    try {
-      await supabase.from("Team").delete().eq("id", teamId);
-    } catch (error3) {
-      console.log(error3);
-      throw error3;
-    }
-    throw error2;
-  }
-
-  return data;
-};
+import useAuth from "../../../components/AuthProvider";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createTeam } from "@/queries/teamQueries";
+import { toast } from "@/components/ui/use-toast";
 
 export default function CreateTeam({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  const { isPending: loading, mutate: createTeamMutate } = useMutation({
+    mutationFn: async (data: { profileId: string; name: string; avatar?: string; cover?: string }) => {
+      return await createTeam(supabase, data);
+    },
+    onSuccess: () => {
+      console.log("Team created successfully");
+      toast({
+        variant: "success",
+        title: "Team Created",
+        description: "Team created successfully",
+      });
+      queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Could not create team!",
+        description: error.message,
+      });
+      console.log(error);
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    const formData = new FormData(e.currentTarget);
-    await insertTeam(formData, user);
+
+    await createTeamMutate({
+      profileId: user?.id as string,
+      name: e.currentTarget.teamName.value,
+    });
+
     onClose();
-    router.push("/");
-    setLoading(false);
   };
 
   return (
     <div className="flex flex-col items-center justify-center">
       <div className="flex items-center justify-between gap-4">
-      <h2 className="text-4xl font-bold text-center"> Create a Team </h2>
-      <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded-md">
-        Close
-      </button>
+        <h2 className="text-4xl font-bold text-center"> Create a Team </h2>
+        <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded-md">
+          Close
+        </button>
       </div>
       <form className="flex flex-col items-center justify-center" onSubmit={handleSubmit}>
         <input name="teamName" type="text" placeholder="Team Name" className="border-2 border-gray-300 rounded-md p-2 mb-4" />
         {/* <input type="text" placeholder="Team Description" className="border-2 border-gray-300 rounded-md p-2 mb-4" /> */}
-        <button className="bg-green-500 text-white px-4 py-2 rounded-md">{loading ? "Loading" : "Create Team"} </button>
+        <button className="bg-green-500 text-white px-4 py-2 rounded-md">{loading ? "Loading..." : "Create Team"} </button>
       </form>
     </div>
   );

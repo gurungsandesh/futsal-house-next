@@ -1,29 +1,41 @@
 import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
-import { useContext, useRef, useState } from "react";
-import useAuth, { UserContext } from "../../../components/AuthProvider";
-
-const joinTeam = async (teamId: string, user: User | null) => {
-  const supabase = createClient();
-  const profileId = user?.id;
-
-  if(!profileId) return console.log("No user id");
-
-  const { data, error } = await supabase.from("MembersOnTeam").insert([{ teamId, profileId }]).select("*").single();
-  if (error) {
-    console.log(error);
-    throw error;
-  }
-  return data;
-};
+import { useRef, useState } from "react";
+import useAuth from "../../../components/AuthProvider";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { joinTeam } from "@/queries/teamQueries";
+import { toast } from "@/components/ui/use-toast";
 
 export default function JoinTeam({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
   const supabase = createClient();
+  const queryClient = useQueryClient();
   const teamNameRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [foundTeams, setFoundTeams] = useState<any[]>([]);
   const [showFoundTeams, setShowFoundTeams] = useState(false);
+
+  const joinTeamMutation = useMutation({
+    mutationFn: async (data: { teamId: string, profileId: string}) => {
+      await joinTeam(supabase, data);
+    },
+    onSuccess: () => {
+      toast({
+        variant: "success",
+        title: "Team Joined",
+        description: "Team joined successfully",
+      });
+      queryClient.invalidateQueries();
+      onClose();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Could not join team!",
+        description: error.message,
+      })
+      console.log(error);
+    },
+  })  
 
   const handleOnSearch = async (e: any) => {
     e.preventDefault();
@@ -77,8 +89,7 @@ export default function JoinTeam({ onClose }: { onClose: () => void }) {
                     <button
                       className="bg-green-500 text-white px-4 py-2 rounded-md"
                       onClick={async () => {
-                        await joinTeam(team.id, user);
-                        onClose();
+                        joinTeamMutation.mutate({ teamId: team.id, profileId: user?.id as string });
                       }}
                     >
                       Join Team

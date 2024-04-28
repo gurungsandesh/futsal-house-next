@@ -567,6 +567,13 @@ export type Database = {
         }
         Returns: string
       }
+      leave_team: {
+        Args: {
+          team_id: string
+          profile_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       challengetype: "FRIENDLY" | "LOSERS_PAY" | "CHALLENGE"
