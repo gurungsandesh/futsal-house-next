@@ -4,6 +4,8 @@ export function getTeamsByMemberId(supabase: SupabaseClient, data: { profileId: 
   return supabase.from("MembersOnTeam").select("*, team:MembersOnTeam_teamId_fkey(*)").eq("profileId", data.profileId).throwOnError();
 }
 
+
+
 export function leaveTeam(supabase: SupabaseClient, data: { teamId: string; profileId: string }) {
   // return supabase.rpc("leave_team", { team_id: data.teamId, profile_id: data.profileId }).throwOnError();
   return new Promise(async (resolve, reject) => {
