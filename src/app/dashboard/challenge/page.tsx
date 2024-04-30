@@ -1,16 +1,18 @@
 "use client";
 
 import { useContext, useEffect, useRef, useState } from "react";
-import { createMatchMakeTicket } from "./actions";
 import useAuth, { UserContext } from "../../../components/AuthProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/components/ui/use-toast";
+
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
 import { getFutsalCenters, insertFutsalCenter } from "@/queries/futsalCenterQueries";
 import SelectFutsalCenter from "./_components/SelectFutsalCenter";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/components/ui/use-toast";
+import { ChallengeType, createMatchMakeTicket, MatchMakeTicketInput } from "@/queries/matchMakeTicketQueries";
 
 export default function PostChallengePage() {
   const { user } = useAuth();
@@ -52,6 +54,32 @@ export default function PostChallengePage() {
       toast({
         variant: "destructive",
         title: "Could not add futsal center!",
+        description: error.message,
+      });
+      console.log(error);
+    },
+  });
+
+  const {
+    mutate: insertMatchMakeTicketMutate,
+    isPending: pendingInsertMatchMakeTicket,
+    error: insertMatchMakeTicketError,
+  } = useMutation({
+    mutationFn: async (data: MatchMakeTicketInput) => {
+      await createMatchMakeTicket(supabase, data);
+    },
+    onSuccess: () => {
+      toast({
+        variant: "success",
+        title: "Match Make Ticket Created",
+        description: "Match Make Ticket created successfully",
+      });
+      queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Could not create match make ticket!",
         description: error.message,
       });
       console.log(error);
@@ -110,7 +138,7 @@ export default function PostChallengePage() {
       futsalCenterNameRef.current.value = "";
       futsalCenterLocationRef.current.value = "";
 
-      await insertFutsalCenterMutate({ name: futsalCenter, location });
+      insertFutsalCenterMutate({ name: futsalCenter, location });
 
       setManualFutsalInput(false);
     }
@@ -119,9 +147,24 @@ export default function PostChallengePage() {
   const handlePostChallenge = async (e: any) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const { data, error } = await createMatchMakeTicket(formData);
-    if (!data || error) return console.log(error);
-    router.push("/dashboard");
+
+    const data = {
+      bookingFee: parseInt(formData.get("bookingFee") as string),
+      challengerId: formData.get("challengerId") as string,
+      challengerTeamId: formData.get("challengerTeamId") as string,
+      challengeType: formData.get("challengeType") as ChallengeType,
+      duration: parseInt(formData.get("duration") as string),
+      futsalCenterId: formData.get("futsalCenterId") as string,
+      matchId: null,
+      message: formData.get("message") as string,
+      opponentId: null,
+      status: "OPEN",
+      matchDateTime: formData.get("matchDateTime") as string,
+    };
+
+    await insertMatchMakeTicketMutate(data);
+
+    // router.push("/dashboard");
   };
 
   return (
@@ -165,8 +208,7 @@ export default function PostChallengePage() {
               <input ref={futsalCenterNameRef} name="futsalCenter" type="text" placeholder="Futsal Center" className="border-2 border-gray-300 rounded-md p-2 mb-4" />
               <input ref={futsalCenterLocationRef} name="location" type="text" placeholder="Location" className="border-2 border-gray-300 rounded-md p-2 mb-4" />
               <button className="bg-blue-500 text-white px-4 py-2 rounded-md" onClick={handleManualFutsalInput}>
-                {" "}
-                Add Futsal Center{" "}
+                Add Futsal Center
               </button>
               <label htmlFor="manualFutsalInputToggle">
                 Select from List

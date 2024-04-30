@@ -1,10 +1,16 @@
-import { SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestBuilder } from "@supabase/postgrest-js";
+import { PostgrestResponse, SupabaseClient } from "@supabase/supabase-js";
 
-export function getTeamsByMemberId(supabase: SupabaseClient, data: { profileId: string }) {
-  return supabase.from("MembersOnTeam").select("*, team:MembersOnTeam_teamId_fkey(*)").eq("profileId", data.profileId).throwOnError();
+export async function getTeamsByUserId(supabase: SupabaseClient, data: { profileId: string }): Promise<PostgrestBuilder<unknown>> {
+  const { data: membersOnTeamData, error: membersOnTeamError } = await supabase.from("MembersOnTeam").select("*").eq("profileId", data.profileId);
+  if (membersOnTeamError) throw membersOnTeamError;
+  const teamIds = membersOnTeamData?.map((team) => team.teamId) || [];
+  return supabase.from("Team").select("*").in("id", teamIds).throwOnError();
 }
 
-
+export function getTeamsByMemberId(supabase: SupabaseClient, data: { profileId: string }){
+  return supabase.from("MembersOnTeam").select("*, team:MembersOnTeam_teamId_fkey(*)").eq("profileId", data.profileId).throwOnError();
+}
 
 export function leaveTeam(supabase: SupabaseClient, data: { teamId: string; profileId: string }) {
   // return supabase.rpc("leave_team", { team_id: data.teamId, profile_id: data.profileId }).throwOnError();
