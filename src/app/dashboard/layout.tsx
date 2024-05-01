@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 export default function PrivatePage({ children }: Readonly<{ children?: React.ReactNode }>) {
   const currentPath = usePathname();
-  const { user, loading, error } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   const activeClass = (path: string) => {

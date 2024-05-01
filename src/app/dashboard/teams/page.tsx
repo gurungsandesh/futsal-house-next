@@ -63,12 +63,10 @@ export default function TeamsPage() {
                 })}
               </ol>
 
-              <div className="flex items-center justify-start gap-4 my-4">
+              <div className="w-full flex items-center justify-end gap-4 my-4">
                 <Link href={`/dashboard/teams/${row.id}`}>
                   <button className="bg-blue-500 hover:bg-blue-700 text-xs text-white font-bold py-2 px-4 rounded">View Team</button>
                 </Link>
-                <button className="bg-green-500 hover:bg-green-700 text-xs text-white font-bold py-2 px-4 rounded">Edit Team</button>
-                <button className="bg-red-500 hover:bg-red-700 text-xs text-white font-bold py-2 px-4 rounded">Delete Team</button>
               </div>
               <hr className="my-4" />
             </li>
@@ -83,12 +81,13 @@ export default function TeamsPage() {
         <Link href="/dashboard">
           <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Back to Dashboard</button>
         </Link>
-        <Link href="/dashboard/teams/create">
+
+        {/* <Link href="/dashboard/teams/create">
           <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Create Team</button>
         </Link>
         <Link href="/dashboard/teams/join">
           <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Join Team</button>
-        </Link>
+        </Link> */}
       </div>
 
       {/* <button onClick={onClickCreateTeam}>Create Team</button>

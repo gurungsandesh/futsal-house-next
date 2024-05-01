@@ -39,7 +39,7 @@ export default function useUser() {
       data.subscription.unsubscribe();
     };
 
-  }, [supabase.auth]);
+  }, [supabase.auth, user]);
 
   const login = async (email: string, password: string) => {
     console.log("Logging in...");
