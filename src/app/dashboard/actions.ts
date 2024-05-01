@@ -1,8 +1,10 @@
-import { createClient } from '@/utils/supabase/client'
-import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
+// "use server"
 
-export async function logout(router: AppRouterInstance){
+import { createClient } from '@/utils/supabase/client'
+// import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
+
+
+export async function logout(){
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/')
 }

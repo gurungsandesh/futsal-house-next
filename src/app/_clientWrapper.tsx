@@ -2,12 +2,12 @@
 
 import { AuthProvider } from "@/components/AuthProvider";
 import { ReactQueryClientProvider } from "@/components/ReactQueryClientProvider";
-import { ToastContainer } from "react-toastify";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function ClientWrapper({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ReactQueryClientProvider>
-      <ToastContainer />
+      <Toaster />
       <AuthProvider>{children}</AuthProvider>
     </ReactQueryClientProvider>
   );

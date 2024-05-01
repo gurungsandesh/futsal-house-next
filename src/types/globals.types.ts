@@ -12,3 +12,5 @@ export type MatchStats = Database["public"]["Tables"]["MatchStats"]["Row"];
 export type LockedTeam = Database["public"]["Tables"]["LockedTeam"]["Row"];
 export type MembersOnLockedTeam = Database["public"]["Tables"]["MembersOnLockedTeam"]["Row"];
 export type Review = Database["public"]["Tables"]["Review"]["Row"];
+
+export type TeamMemberStatus = Database["public"]["Enums"]["TeamMemberStatus"];

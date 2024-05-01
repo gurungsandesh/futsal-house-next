@@ -1,18 +1,22 @@
 "use client";
 
 import useAuth from "@/components/AuthProvider";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function MainSection() {
   const router = useRouter();
-  const { user, loading, error } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (loading) return <h1> Checking credentials... </h1>;
-  if (user) {
-    router.push("/dashboard");
-    return <h1> Redirecting to dashboard... </h1>;
-  }
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/dashboard");
+    }
+  }, [loading, router, user]);
+
+  if (loading) return <Loading />;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -37,3 +41,12 @@ export default function MainSection() {
     </main>
   );
 }
+
+const Loading = () => {
+  return (
+    <div className="w-full h-screen flex flex-col items-center justify-center p-4 lg:p-20 xl:p-24 gap-8">
+      <Skeleton className="w-40 h-40 rounded-full" />
+      <p className="text-2xl font-bold text-gray-900"> Checking credentials... </p>
+    </div>
+  );
+};

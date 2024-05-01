@@ -1,48 +1,95 @@
 "use client";
 
 import { useContext, useEffect, useRef, useState } from "react";
-import { createMatchMakeTicket } from "./actions";
 import useAuth, { UserContext } from "../../../components/AuthProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/components/ui/use-toast";
+
+import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
+import { getFutsalCenters, insertFutsalCenter } from "@/queries/futsalCenterQueries";
+import SelectFutsalCenter from "./_components/SelectFutsalCenter";
+import { ChallengeType, createMatchMakeTicket, MatchMakeTicketInput } from "@/queries/matchMakeTicketQueries";
+
 export default function PostChallengePage() {
   const { user } = useAuth();
-  const router = useRouter(); 
+  const router = useRouter();
   const supabase = createClient();
-  
+  const queryClient = useQueryClient();
+
   const [manualFutsalInput, setManualFutsalInput] = useState(false);
-  const [futsalCenters, setFutsalCenters] = useState<any[]>([]);
   const [userTeams, setUserTeams] = useState<any[]>([]);
   const [challengeTypes, setChallengeTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const futsalCenterRef = useRef<HTMLSelectElement>(null);
   const futsalCenterNameRef = useRef<HTMLInputElement>(null);
   const futsalCenterLocationRef = useRef<HTMLInputElement>(null);
-  
+
   const now = new Date();
-  now.setHours(now.getHours() + 6);
+  now.setHours(now.getHours() + 1);
   const minDate = now.toISOString().slice(0, 16);
-  
-  useEffect(() => { 
-    const fetchFutsalCenters = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.from("FutsalCenter").select("*");
-      if (!data || error) {
-        console.log(error);
-        return;
-      }
-      setFutsalCenters(data as []);
-      setLoading(false);
-    };
-    (async () => await fetchFutsalCenters())();
-  }, [supabase]);
+
+  const { data: futsalCenters, isLoading: loadingFutsalCenters, error: futsalCentersError } = useQuery(getFutsalCenters(supabase), { enabled: !!supabase });
+  const {
+    mutate: insertFutsalCenterMutate,
+    isPending: pendingInsertFutsalCenter,
+    error: insertFutsalCenterError,
+  } = useMutation({
+    mutationFn: async (data: { name: string; location: string }) => {
+      await insertFutsalCenter(supabase, data);
+    },
+    onSuccess: () => {
+      toast({
+        variant: "success",
+        title: "Futsal Center Added",
+        description: "Futsal Center added successfully",
+      });
+      queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Could not add futsal center!",
+        description: error.message,
+      });
+      console.log(error);
+    },
+  });
+
+  const {
+    mutate: insertMatchMakeTicketMutate,
+    isPending: pendingInsertMatchMakeTicket,
+    error: insertMatchMakeTicketError,
+  } = useMutation({
+    mutationFn: async (data: MatchMakeTicketInput) => {
+      await createMatchMakeTicket(supabase, data);
+    },
+    onSuccess: () => {
+      toast({
+        variant: "success",
+        title: "Match Make Ticket Created",
+        description: "Match Make Ticket created successfully",
+      });
+      queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Could not create match make ticket!",
+        description: error.message,
+      });
+      console.log(error);
+    },
+  });
 
   useEffect(() => {
     const fetchUserTeams = async () => {
       setLoading(true);
-      if(!user?.id) return console.log("No user id");
+      if (!user?.id) return console.log("No user id");
       const { data, error } = await supabase.from("MembersOnTeam").select("*").eq("profileId", user?.id);
       if (error) {
         console.log(error);
@@ -70,13 +117,13 @@ export default function PostChallengePage() {
   useEffect(() => {
     const fetchChallengeTypes = async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc(`get_types`, { enum_type: "ChallengeType"});
+      const { data, error } = await supabase.rpc(`get_types`, { enum_type: "ChallengeType" });
 
-      if(!data || error) return console.log(error);
+      if (!data || error) return console.log(error);
       const converted = JSON.parse(JSON.stringify(data));
-      setChallengeTypes(converted);      
+      setChallengeTypes(converted);
       setLoading(false);
-    }
+    };
     (async () => await fetchChallengeTypes())();
   }, [supabase]);
 
@@ -85,50 +132,40 @@ export default function PostChallengePage() {
     if (futsalCenterNameRef.current && futsalCenterLocationRef.current) {
       const futsalCenter = futsalCenterNameRef.current.value;
       const location = futsalCenterLocationRef.current.value;
-      if (!futsalCenter || !location) return;      
+      if (!futsalCenter || !location) return;
 
-      // check if the futsal center already exists in database
-      const { data, error } = await supabase.from("FutsalCenter").select("*").eq("name", futsalCenter);
-
-      if (error) {
-        console.log(error);
-        return;
-      } else if (data.length > 0) {
-        console.log("Futsal Center already exists");
-        return;
-      }
-
-      // insert a location to the database
-      const { data: locationData, error: locationError } = await supabase.from("Location").insert([{ formatted_address: location }]).select().single();
-
-      if (!locationData || locationError) {
-        console.log(locationError);
-        return;
-      }
-
-      // insert the futsal center
-      const { data: insertData, error: insertError } = await supabase.from("FutsalCenter").insert([{ name: futsalCenter, locationId: locationData.id }]).select().single();
-      if (insertError) {
-        console.log(insertError);
-        return;
-      }
-
-      console.log(insertData);
-      setFutsalCenters([...futsalCenters, insertData]);
+      // setFutsalCenters([...futsalCenters, insertData]);
       futsalCenterNameRef.current.value = "";
       futsalCenterLocationRef.current.value = "";
+
+      insertFutsalCenterMutate({ name: futsalCenter, location });
+
       setManualFutsalInput(false);
     }
-  };  
+  };
 
   const handlePostChallenge = async (e: any) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const { data, error } = await createMatchMakeTicket(formData);
-    if(!data || error) return console.log(error);
-    router.push("/dashboard");
-  }
 
+    const data = {
+      bookingFee: parseInt(formData.get("bookingFee") as string),
+      challengerId: formData.get("challengerId") as string,
+      challengerTeamId: formData.get("challengerTeamId") as string,
+      challengeType: formData.get("challengeType") as ChallengeType,
+      duration: parseInt(formData.get("duration") as string),
+      futsalCenterId: formData.get("futsalCenterId") as string,
+      matchId: null,
+      message: formData.get("message") as string,
+      opponentId: null,
+      status: "OPEN",
+      matchDateTime: formData.get("matchDateTime") as string,
+    };
+
+    await insertMatchMakeTicketMutate(data);
+
+    // router.push("/dashboard");
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center p-24">
@@ -137,14 +174,15 @@ export default function PostChallengePage() {
       </h1>
 
       {loading && <h1> Loading... </h1>}
-      {!loading && userTeams.length === 0 && 
-      <section className="flex items-center justify-center">
-        <h1 className="text-2xl font-bold"> You need to be in a team to post a challenge </h1>
-      </section>}
+      {!loading && userTeams.length === 0 && (
+        <section className="flex items-center justify-center">
+          <h1 className="text-2xl font-bold"> You need to be in a team to post a challenge </h1>
+        </section>
+      )}
 
       <Link href="/dashboard" className="mb-4">
-          <p className="text-white bg-red-500 px-4 py-2 rounded-md"> Go Dashboard </p>
-        </Link>
+        <p className="text-white bg-red-500 px-4 py-2 rounded-md"> Go Dashboard </p>
+      </Link>
 
       {!loading && userTeams.length > 0 && (
         <form className="flex flex-col items-center justify-center" onSubmit={handlePostChallenge}>
@@ -153,23 +191,25 @@ export default function PostChallengePage() {
 
           {!manualFutsalInput ? (
             <>
-              <select name="futsalCenterId" className="border-2 border-gray-300 rounded-md p-2 mb-4">
-                {futsalCenters.map((futsalCenter) => (
-                  <option key={futsalCenter.id} value={futsalCenter.id}>
-                    {futsalCenter.name}
-                  </option>
-                ))}
-              </select>
-              <label htmlFor="manualFutsalInputToggle">
+              <SelectFutsalCenter ref={futsalCenterRef} name="futsalCenterId" />
+              <label htmlFor="manualFutsalInputToggle" className="text-sm text-gray-600">
                 Input Manually
-                <input name="manualFutsalInputToggle" type="checkbox" checked={manualFutsalInput} onChange={() => setManualFutsalInput(!manualFutsalInput)} />
+                <input
+                  name="manualFutsalInputToggle"
+                  type="checkbox"
+                  checked={manualFutsalInput}
+                  onChange={() => setManualFutsalInput(!manualFutsalInput)}
+                  className="ml-2 border-2 border-gray-300 rounded-md p-2 mb-4"
+                />
               </label>
             </>
           ) : (
             <>
               <input ref={futsalCenterNameRef} name="futsalCenter" type="text" placeholder="Futsal Center" className="border-2 border-gray-300 rounded-md p-2 mb-4" />
               <input ref={futsalCenterLocationRef} name="location" type="text" placeholder="Location" className="border-2 border-gray-300 rounded-md p-2 mb-4" />
-              <button className="bg-blue-500 text-white px-4 py-2 rounded-md" onClick={handleManualFutsalInput}> Add Futsal Center </button>
+              <button className="bg-blue-500 text-white px-4 py-2 rounded-md" onClick={handleManualFutsalInput}>
+                Add Futsal Center
+              </button>
               <label htmlFor="manualFutsalInputToggle">
                 Select from List
                 <input name="manualFutsalInputToggle" type="checkbox" checked={manualFutsalInput} onChange={() => setManualFutsalInput(!manualFutsalInput)} />
@@ -191,8 +231,11 @@ export default function PostChallengePage() {
 
           <label htmlFor="challengeType"> Challenge Type </label>
           <select name="challengeType" className="border-2 border-gray-300 rounded-md p-2 mb-4">
-            { challengeTypes.map((type) => (
-              <option key={type} value={type}> {type} </option>
+            {challengeTypes.map((type) => (
+              <option key={type} value={type}>
+                {" "}
+                {type}{" "}
+              </option>
             ))}
           </select>
 
@@ -200,7 +243,7 @@ export default function PostChallengePage() {
           <input name="bookingFee" type="number" placeholder="Booking Fee" className="border-2 border-gray-300 rounded-md p-2" defaultValue={1000} />
           <p className="text-red-500 text-sm mb-4">Please confirm with the futsal center</p>
 
-          <input name="duration" type="number" placeholder="Duration" className="border-2 border-gray-300 rounded-md p-2" defaultValue={60} />          
+          <input name="duration" type="number" placeholder="Duration" className="border-2 border-gray-300 rounded-md p-2" defaultValue={60} />
           <p className="text-green-500 text-sm mb-4">Duration in minutes</p>
 
           <button className="bg-green-500 text-white px-4 py-2 rounded-md"> Post Challenge 🏆</button>
